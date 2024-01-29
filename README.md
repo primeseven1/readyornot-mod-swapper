@@ -12,7 +12,7 @@ Using
 - Make sure there is a modswap.ini file in the directory that you run the executable in, replace the ron_dir option with the actual path to your Ready or Not folder:
 ```ini
 [directories]
-ron_dir="~/.steam/steam/steamapps/common/Ready Or Not"
+ron_dir="/home/yourusername/.steam/steam/steamapps/common/Ready Or Not"
 ```
 
 - Now create a folder with the mods (.pak) files you want to install/swap to, and then run this command
