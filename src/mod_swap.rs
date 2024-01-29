@@ -1,82 +1,42 @@
-use std::process::Command;
+use std::fs;
+use std::path::{Path, PathBuf};
+use glob::glob;
 
 fn find_mod_files(dir: &String) -> Vec<String> {
-    let cmd = Command::new("find")
-        .arg(dir)
-        .arg("-type")
-        .arg("f")
-        .arg("-name")
-        .arg("*Mods_*_P.pak")
-        .arg("-print")
-        .output();
+    let pattern = format!("{}/*Mods_*_P.pak", dir);
 
-    let files: String;
+    let files: Vec<String> = glob(&pattern)
+        .expect("Failed to read glob pattern")
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| entry.is_file())
+        .flat_map(|entry|entry.into_os_string().into_string())
+        .collect();
 
-    match cmd {
-        Ok(output) => {
-            if output.status.success() {
-                files = String::from_utf8_lossy(&output.stdout).to_string();
-            } else {
-                let result_stderr = String::from_utf8_lossy(&output.stderr);
-                panic!("Error finding files:\n{}", result_stderr);
-            }
-        }
-        Err(e) => panic!("Error finding files: {}", e),
-    }
-
-    let mut files_vector: Vec<&str> = files.split("\n").collect();
-    /* The last element is empty, so just remove it to avoid errors */
-    files_vector.pop();
-
-    let mut files_vector_string: Vec<String> = vec![];
-
-    for file in files_vector {
-        files_vector_string.push(file.to_string());
-    } 
-
-    return files_vector_string;
+    return files;
 }
 
 fn remove_current_mods(files: Vec<String>) {
-    for file in files.iter() {
-        let cmd = Command::new("rm")
-            .arg(&file)
-            .output();
-        match cmd {
-            Ok(output) => {
-                if output.status.success() {
-                    println!("Removed {}", file)
-                } else {
-                    let result_stderr = String::from_utf8_lossy(&output.stderr);
-                    panic!("Error removing files:\n{}", result_stderr);
-                }
-            } Err(e) => panic!("Error removing files {}", e),
+    for file in files { 
+        println!("Removing file {}", file);
+
+        if let Err(err) = fs::remove_file(&file) {
+            panic!("Error removing file {}: {}", file, err);
         }
     }
-
 }
 
 fn install_new_mods(game_dir: &String, swap_dir: &String) {
-    let ron_mod_folder: String = format!("{}/ReadyOrNot/Content/Paks/", game_dir);
-    
-    let mods: Vec<String> = find_mod_files(swap_dir);
-    
-    for mod_file in mods {
-        let cmd = Command::new("cp")
-            .arg(&mod_file)
-            .arg(&ron_mod_folder)
-            .output();
-        match cmd {
-            Ok(output) => {
-                if output.status.success() {
-                    println!("Installed {}", mod_file)
-                } else {
-                    let result_stderr = String::from_utf8_lossy(&output.stderr);
-                    panic!("Error installing files:\n{}", result_stderr);
-                }
-            } Err(e) => panic!("Error installing files {}", e),
-        }
+    let ron_mod_folder: PathBuf = Path::new(game_dir).join("ReadyOrNot/Content/Paks/");
 
+    let mods: Vec<String> = find_mod_files(swap_dir);
+
+    for mod_file in mods {
+        let dest = Path::new(&ron_mod_folder).join(Path::new(&mod_file).file_name().unwrap());
+
+        match fs::copy(&mod_file, &dest) {
+            Ok(_) => println!("Installed {} into {}", &mod_file, &ron_mod_folder.to_string_lossy()),
+            Err(err) => panic!("Failed to install {}: {}", &mod_file, err),
+        }
     }
 }
 
