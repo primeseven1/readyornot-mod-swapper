@@ -2,6 +2,10 @@ About
 =====
 I created this because I thought it would be nice to have a program where I could swap between different mod packages. I also don't have much expierience with Rust, and I wanted to make something useful with it.
 
+Windows
+=======
+- As of January 31st 2024, this will work on Windows, however, instead of backslashes for the path to the ready or not folder in the ini, you must use forward slashes. However, note that windows support could break at any time. There is planned support for Windows in the future.
+
 Building
 ========
 - Run cargo build to build without optimizations and to get debugging symbols
