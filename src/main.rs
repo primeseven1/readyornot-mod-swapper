@@ -21,4 +21,6 @@ fn main() {
 
     let ron_dir: String = config::get_ini_section_key_value("directories", "ron_dir");
     mod_swap::do_mod_swap(&ron_dir.to_string(), &argv[1]);
+
+    println!("Mod swap completed successfully")
 }
